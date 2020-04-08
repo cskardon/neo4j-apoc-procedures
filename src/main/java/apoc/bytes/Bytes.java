@@ -73,4 +73,22 @@ public class Bytes {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         return buffer.getLong();
     }
+
+    @UserFunction("apoc.bytes.fromString")
+    @Description("Turns a String into an array of bytes.")
+    public byte[] fromString(@Name("text") String text){
+        if (text == null) return null;
+        if(text.trim().isEmpty()) return new byte[0];
+
+        return text.getBytes();
+    }
+
+    @UserFunction("apoc.bytes.toString")
+    @Description("Turns a byte array into a String.")
+    public String toString(@Name("bytes") byte[] bytes){
+        if(bytes == null) return null;
+        if(bytes.length == 0) return "";
+
+        return new String(bytes);
+    }
 }

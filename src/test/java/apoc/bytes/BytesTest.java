@@ -73,15 +73,15 @@ public class BytesTest {
     }
 
     @Test
-    public void toHexString(){
+    public void toHexString() {
         final byte[] input = new byte[]{(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
         final String expected = "CAFEBABE";
         final String actual = BYTES.toHexString(input);
         assertEquals(expected, actual);
     }
-    
+
     @Test
-    public void toHexStringOddLength(){
+    public void toHexStringOddLength() {
         final byte[] input = new byte[]{(byte) 0x0A, (byte) 0xBC};
         final String expected = "ABC";
         final String actual = BYTES.toHexString(input);
@@ -102,7 +102,7 @@ public class BytesTest {
 
         try (Transaction tx = db.beginTx()) {
             final ResourceIterator<String> actual = tx.execute(query, parameters).columnAs("value");
-            assertEquals("expected CAFEBABE byte array", expected, actual.next());
+            assertEquals("expected CAFEBABE", expected, actual.next());
             assertFalse(actual.hasNext());
         }
     }
@@ -142,7 +142,7 @@ public class BytesTest {
     }
 
     @Test
-    public void toLongMax(){
+    public void toLongMax() {
         final Long expected = Long.MAX_VALUE;
         final byte[] bytes = new byte[]{(byte) 0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
         final Long actual = BYTES.toLong(bytes);
@@ -150,7 +150,7 @@ public class BytesTest {
     }
 
     @Test
-    public void toLongMin(){
+    public void toLongMin() {
         final Long expected = Long.MIN_VALUE;
         final byte[] bytes = new byte[]{(byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00};
         final Long actual = BYTES.toLong(bytes);
@@ -158,7 +158,7 @@ public class BytesTest {
     }
 
     @Test
-    public void toLongZero(){
+    public void toLongZero() {
         final Long expected = 0L;
         final byte[] bytes = new byte[]{(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00};
         final Long actual = BYTES.toLong(bytes);
@@ -174,6 +174,88 @@ public class BytesTest {
         try (Transaction tx = db.beginTx()) {
             final ResourceIterator<Long> actual = tx.execute(query, parameters).columnAs("value");
             assertEquals(expected, actual.next());
+            assertFalse(actual.hasNext());
+        }
+    }
+
+    @Test
+    public void fromString() {
+        final byte[] expected = new byte[]{(byte) 0x46, (byte) 0x6F, (byte) 0x6F};
+        final String input = "Foo";
+
+        final byte[] actual = BYTES.fromString(input);
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void fromStringEmpty() {
+        final byte[] expected = new byte[0];
+        final String input = "";
+
+        final byte[] actual = BYTES.fromString(input);
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void fromStringNull() {
+        final byte[] expected = null;
+        final String input = null;
+
+        final byte[] actual = BYTES.fromString(input);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void fromStringUsingFunction() {
+        Map<String, Object> parameters = Collections.singletonMap("text", "Foo");
+        String query = "RETURN  apoc.bytes.fromString($text) AS value";
+        final byte[] expected = new byte[]{(byte) 0x46, (byte) 0x6F, (byte) 0x6F};
+
+        try (Transaction tx = db.beginTx()) {
+            final ResourceIterator<byte[]> actual = tx.execute(query, parameters).columnAs("value");
+            assertArrayEquals("expected Foo byte array", expected, actual.next());
+            assertFalse(actual.hasNext());
+        }
+    }
+
+    @Test
+    public void toStringEmpty() {
+        final String expected = "";
+        final byte[] input = new byte[0];
+
+        final String actual = BYTES.toString(input);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void toStringNull() {
+        final String expected = null;
+        final byte[] input = null;
+
+        final String actual = BYTES.toString(input);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void toStringCaseSensitive() {
+        final String expected = "Foo";
+        final String expectedNot = "foo";
+        final byte[] input = new byte[]{(byte) 0x46, (byte) 0x6F, (byte) 0x6F};
+
+        final String actual = BYTES.toString(input);
+        assertEquals(expected, actual);
+        assertNotEquals(expectedNot, actual);
+    }
+
+    @Test
+    public void toStringUsingFunction() {
+        Map<String, Object> parameters = Collections.singletonMap("bytes", new byte[]{(byte) 0x46, (byte) 0x6F, (byte) 0x6F});
+        String query = "RETURN apoc.bytes.toString($bytes) AS value";
+        final String expected = "Foo";
+
+        try (Transaction tx = db.beginTx()) {
+            final ResourceIterator<String> actual = tx.execute(query, parameters).columnAs("value");
+            assertEquals("expected Foo", expected, actual.next());
             assertFalse(actual.hasNext());
         }
     }
